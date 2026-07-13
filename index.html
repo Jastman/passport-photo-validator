@@ -7,197 +7,125 @@
   <script src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
   <style>
     :root {
-      --pass: #16a34a; --pass-bg: #dcfce7;
-      --fail: #dc2626; --fail-bg: #fee2e2;
-      --warn: #d97706; --warn-bg: #fef3c7;
-      --surface: #ffffff; --bg: #f1f5f9;
-      --border: #e2e8f0; --text: #0f172a;
-      --muted: #64748b; --blue: #2563eb;
+      --pass:#16a34a; --pass-bg:#dcfce7;
+      --fail:#dc2626; --fail-bg:#fee2e2;
+      --exempt:#1d4ed8; --exempt-bg:#dbeafe;
+      --warn:#d97706; --warn-bg:#fef3c7;
+      --surface:#fff; --bg:#f1f5f9;
+      --border:#e2e8f0; --text:#0f172a; --muted:#64748b; --blue:#2563eb;
     }
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+    .flag-bar{height:8px;background:linear-gradient(90deg,#000 33.33%,#DD0000 33.33% 66.66%,#FFCE00 66.66%)}
+    .topbar{background:#fff;border-bottom:1px solid var(--border);padding:.9rem 1.5rem;display:flex;align-items:center;gap:.875rem}
+    .topbar h1{font-size:1.3rem;font-weight:700}
+    .topbar p{color:var(--muted);font-size:.8rem;margin-top:1px}
+    #model-badge{margin-left:auto;font-size:.76rem;padding:.3rem .7rem;border-radius:20px;background:var(--bg);border:1px solid var(--border);display:flex;align-items:center;gap:.4rem;white-space:nowrap}
+    #model-badge .dot{width:7px;height:7px;border-radius:50%;background:var(--warn);animation:pulse 1.4s infinite;flex-shrink:0}
+    #model-badge.ready .dot{background:var(--pass);animation:none}
+    #model-badge.err .dot{background:var(--fail);animation:none}
+    @keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
 
-    .flag-bar { height: 8px; background: linear-gradient(90deg, #000 33.33%, #DD0000 33.33% 66.66%, #FFCE00 66.66%); }
+    main{max-width:1300px;margin:0 auto;padding:1.25rem 1.5rem 4rem}
 
-    .topbar {
-      background: #fff; border-bottom: 1px solid var(--border);
-      padding: 1rem 2rem; display: flex; align-items: center; gap: 1rem;
-    }
-    .topbar h1 { font-size: 1.35rem; font-weight: 700; }
-    .topbar p  { color: var(--muted); font-size: 0.82rem; margin-top: 1px; }
-    #model-badge {
-      margin-left: auto; font-size: 0.78rem; padding: 0.35rem 0.75rem;
-      border-radius: 20px; background: var(--bg); border: 1px solid var(--border);
-      display: flex; align-items: center; gap: 0.4rem; white-space: nowrap;
-    }
-    #model-badge .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--warn); animation: pulse 1.4s infinite; flex-shrink: 0; }
-    #model-badge.ready .dot { background: var(--pass); animation: none; }
-    #model-badge.err   .dot { background: var(--fail); animation: none; }
-    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.35} }
+    /* Age selector */
+    .age-wrap{display:flex;align-items:center;gap:.75rem;flex-wrap:wrap;margin-bottom:1rem}
+    .age-label{font-size:.82rem;font-weight:600;color:var(--muted);white-space:nowrap}
+    .age-btns{display:flex;gap:.3rem;flex-wrap:wrap}
+    .age-btn{border:1.5px solid var(--border);background:#fff;border-radius:7px;padding:.38rem .85rem;font-size:.8rem;font-weight:600;cursor:pointer;transition:all .15s;color:var(--muted)}
+    .age-btn:hover{border-color:var(--blue);color:var(--blue)}
+    .age-btn.sel{border-color:var(--blue);background:#eff6ff;color:var(--blue)}
+    .age-note{font-size:.75rem;color:var(--muted);font-style:italic}
 
-    main { max-width: 1280px; margin: 0 auto; padding: 1.5rem 1.5rem 4rem; }
+    /* Upload */
+    #upload-section{text-align:center;padding:2rem 0}
+    #drop-zone{border:2px dashed var(--border);border-radius:16px;padding:2.5rem 2rem;cursor:pointer;transition:all .2s;background:#fff;max-width:560px;margin:0 auto}
+    #drop-zone:hover,#drop-zone.drag-over{border-color:var(--blue);background:#eff6ff}
+    #drop-zone .icon{font-size:2.75rem;margin-bottom:.6rem;display:block}
+    #drop-zone h2{font-size:1.1rem;margin-bottom:.35rem}
+    #drop-zone p{color:var(--muted);font-size:.85rem;margin-bottom:1.1rem}
+    #file-input{display:none}
+    .dz-btns{display:flex;gap:.6rem;justify-content:center;flex-wrap:wrap}
+    .privacy-note{color:var(--muted);font-size:.73rem;margin-top:.75rem}
 
-    /* ── Upload ── */
-    #upload-section { text-align: center; padding: 2.5rem 0; }
-    #drop-zone {
-      border: 2px dashed var(--border); border-radius: 16px; padding: 3rem 2rem;
-      cursor: pointer; transition: all .2s; background: #fff;
-      max-width: 560px; margin: 0 auto;
-    }
-    #drop-zone:hover, #drop-zone.drag-over { border-color: var(--blue); background: #eff6ff; }
-    #drop-zone .icon { font-size: 3rem; margin-bottom: .75rem; display: block; }
-    #drop-zone h2 { font-size: 1.15rem; margin-bottom: .4rem; }
-    #drop-zone p  { color: var(--muted); font-size: .87rem; margin-bottom: 1.25rem; }
-    #file-input   { display: none; }
-    .dz-btns { display: flex; gap: .6rem; justify-content: center; flex-wrap: wrap; }
-    .privacy-note { color: var(--muted); font-size: .75rem; margin-top: .9rem; }
+    /* Buttons */
+    .btn{display:inline-flex;align-items:center;gap:.4rem;padding:.58rem 1.1rem;border-radius:8px;border:none;cursor:pointer;font-size:.86rem;font-weight:600;transition:all .15s;line-height:1}
+    .btn:disabled{opacity:.45;cursor:not-allowed}
+    .btn-primary{background:var(--blue);color:#fff}
+    .btn-primary:hover:not(:disabled){background:#1d4ed8}
+    .btn-success{background:var(--pass);color:#fff;font-size:.95rem;padding:.7rem 1.5rem}
+    .btn-success:hover:not(:disabled){background:#15803d}
+    .btn-outline{background:#fff;color:var(--text);border:1px solid var(--border)}
+    .btn-outline:hover:not(:disabled){background:var(--bg)}
+    .btn-ghost{background:transparent;color:var(--muted);border:1px solid var(--border);font-size:.79rem;padding:.42rem .85rem}
+    .btn-ghost:hover:not(:disabled){background:var(--bg);color:var(--text)}
 
-    /* ── Buttons ── */
-    .btn {
-      display: inline-flex; align-items: center; gap: .4rem;
-      padding: .6rem 1.15rem; border-radius: 8px; border: none;
-      cursor: pointer; font-size: .88rem; font-weight: 600;
-      transition: all .15s; line-height: 1;
-    }
-    .btn:disabled { opacity: .45; cursor: not-allowed; }
-    .btn-primary  { background: var(--blue); color: #fff; }
-    .btn-primary:hover:not(:disabled)  { background: #1d4ed8; }
-    .btn-success  { background: var(--pass); color: #fff; font-size: 1rem; padding: .75rem 1.6rem; }
-    .btn-success:hover:not(:disabled)  { background: #15803d; }
-    .btn-outline  { background: #fff; color: var(--text); border: 1px solid var(--border); }
-    .btn-outline:hover:not(:disabled)  { background: var(--bg); }
-    .btn-ghost    { background: transparent; color: var(--muted); border: 1px solid var(--border); font-size: .82rem; padding: .45rem .9rem; }
-    .btn-ghost:hover:not(:disabled)    { background: var(--bg); color: var(--text); }
+    /* Analysis grid */
+    #analysis-section{display:none}
+    #analysis-section.visible{display:grid;grid-template-columns:auto 1fr;gap:1.25rem;align-items:start}
 
-    /* ── Analysis layout ── */
-    #analysis-section { display: none; }
-    #analysis-section.visible { display: grid; grid-template-columns: auto 1fr; gap: 1.25rem; align-items: start; }
+    #photo-panel{background:#fff;border-radius:12px;border:1px solid var(--border);overflow:hidden;width:310px;flex-shrink:0}
+    .panel-hdr{padding:.7rem 1rem;border-bottom:1px solid var(--border);font-weight:600;font-size:.86rem;display:flex;align-items:center;justify-content:space-between}
+    .crop-badge{font-size:.68rem;color:var(--muted);font-weight:400;background:var(--bg);padding:.13rem .45rem;border-radius:99px}
+    #canvas-wrap{position:relative;width:100%}
+    #main-canvas{display:block;width:100%;height:auto}
+    #overlay-canvas{position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none}
+    #analyzing-ov{display:none;position:absolute;inset:0;background:rgba(255,255,255,.85);align-items:center;justify-content:center;flex-direction:column;gap:.55rem;z-index:5}
+    #analyzing-ov.visible{display:flex}
+    .spinner{width:30px;height:30px;border:3px solid var(--border);border-top-color:var(--blue);border-radius:50%;animation:spin .75s linear infinite}
+    @keyframes spin{to{transform:rotate(360deg)}}
 
-    /* Photo panel */
-    #photo-panel {
-      background: #fff; border-radius: 12px; border: 1px solid var(--border);
-      overflow: hidden; width: 320px; flex-shrink: 0;
-    }
-    .panel-hdr {
-      padding: .75rem 1rem; border-bottom: 1px solid var(--border);
-      font-weight: 600; font-size: .88rem;
-      display: flex; align-items: center; justify-content: space-between;
-    }
-    .crop-label {
-      font-size: .7rem; color: var(--muted); font-weight: 400;
-      background: var(--bg); padding: .15rem .5rem; border-radius: 99px;
-    }
-    #canvas-wrap { position: relative; width: 100%; }
-    #main-canvas { display: block; width: 100%; height: auto; }
-    #overlay-canvas {
-      position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-      pointer-events: none;
-    }
-    #analyzing-overlay {
-      display: none; position: absolute; inset: 0;
-      background: rgba(255,255,255,.85); align-items: center; justify-content: center;
-      flex-direction: column; gap: .6rem; z-index: 5;
-    }
-    #analyzing-overlay.visible { display: flex; }
-    .spinner {
-      width: 32px; height: 32px; border: 3px solid var(--border);
-      border-top-color: var(--blue); border-radius: 50%;
-      animation: spin .75s linear infinite;
-    }
-    @keyframes spin { to { transform: rotate(360deg); } }
+    #checks-panel{background:#fff;border-radius:12px;border:1px solid var(--border);display:flex;flex-direction:column;max-height:calc(100vh - 130px);min-width:0}
+    #checklist-scroll{overflow-y:auto;flex:1}
+    #checklist{list-style:none;padding:.3rem}
+    .ck-cat{padding:.38rem .65rem;font-size:.67rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);background:var(--bg);margin:.28rem 0 .08rem;border-radius:5px}
+    .ck-item{display:flex;align-items:flex-start;gap:.55rem;padding:.42rem .65rem;border-radius:7px;margin:1px 0}
+    .ck-item:hover{background:var(--bg)}
+    .ck-icon{width:16px;height:16px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:.6rem;font-weight:800;margin-top:2px}
+    .ck-icon.pass   {background:var(--pass-bg);color:var(--pass)}
+    .ck-icon.fail   {background:var(--fail-bg);color:var(--fail)}
+    .ck-icon.exempt {background:var(--exempt-bg);color:var(--exempt)}
+    .ck-icon.pending{background:var(--bg);color:#94a3b8}
+    .ck-name  {font-size:.82rem;font-weight:500}
+    .ck-detail{font-size:.7rem;color:var(--muted);margin-top:1px;line-height:1.35}
+    .ck-exempt-tag{display:inline-block;font-size:.64rem;background:var(--exempt-bg);color:var(--exempt);border-radius:4px;padding:.05rem .3rem;margin-left:.3rem;font-weight:700}
 
-    /* Right panel — checklist */
-    #checks-panel {
-      background: #fff; border-radius: 12px; border: 1px solid var(--border);
-      display: flex; flex-direction: column;
-      max-height: calc(100vh - 140px); min-width: 0;
-    }
-    #checklist-scroll { overflow-y: auto; flex: 1; }
-    #checklist { list-style: none; padding: .3rem; }
-    .ck-cat {
-      padding: .4rem .7rem; font-size: .68rem; font-weight: 700;
-      text-transform: uppercase; letter-spacing: .06em; color: var(--muted);
-      background: var(--bg); margin: .3rem 0 .1rem; border-radius: 6px;
-    }
-    .ck-item {
-      display: flex; align-items: flex-start; gap: .6rem;
-      padding: .45rem .7rem; border-radius: 7px; margin: 1px 0;
-    }
-    .ck-item:hover { background: var(--bg); }
-    .ck-icon {
-      width: 17px; height: 17px; border-radius: 50%; flex-shrink: 0;
-      display: flex; align-items: center; justify-content: center;
-      font-size: .62rem; font-weight: 800; margin-top: 2px;
-    }
-    .ck-icon.pass    { background: var(--pass-bg); color: var(--pass); }
-    .ck-icon.fail    { background: var(--fail-bg); color: var(--fail); }
-    .ck-icon.pending { background: var(--bg);      color: #94a3b8;   }
-    .ck-name   { font-size: .83rem; font-weight: 500; }
-    .ck-detail { font-size: .71rem; color: var(--muted); margin-top: 1px; line-height: 1.35; }
+    #summary-bar{padding:.7rem 1rem;border-top:1px solid var(--border);background:var(--bg)}
+    #summary-txt{font-weight:600;font-size:.85rem;margin-bottom:.38rem}
+    #prog-bar{height:5px;background:var(--border);border-radius:3px;overflow:hidden}
+    #prog-fill{height:100%;border-radius:3px;transition:width .5s,background .4s}
 
-    #summary-bar {
-      padding: .75rem 1rem; border-top: 1px solid var(--border);
-      background: var(--bg);
-    }
-    #summary-txt { font-weight: 600; font-size: .88rem; margin-bottom: .4rem; }
-    #prog-bar { height: 5px; background: var(--border); border-radius: 3px; overflow: hidden; }
-    #prog-fill { height: 100%; border-radius: 3px; transition: width .5s, background .4s; }
+    /* Result */
+    #result-section{display:none;margin-top:1.25rem}
+    #result-section.visible{display:block}
+    .result-card{border-radius:12px;border:1px solid;padding:1.35rem 1.5rem}
+    .result-pass{background:#f0fdf4;border-color:#86efac}
+    .result-fail{background:#fffbeb;border-color:#fcd34d}
+    .result-card h2{font-size:1.1rem;font-weight:700;margin-bottom:.35rem}
+    .result-card .sub{color:var(--muted);font-size:.83rem;margin-bottom:.9rem;line-height:1.5}
+    .result-btns{display:flex;gap:.65rem;flex-wrap:wrap;align-items:center}
+    #rec-list{list-style:none;margin:.75rem 0 1rem;display:grid;gap:.38rem}
+    .rec-item{display:flex;align-items:flex-start;gap:.55rem;background:#fff;border:1px solid #fde68a;border-radius:8px;padding:.55rem .8rem;font-size:.83rem;line-height:1.45}
+    .rec-item .ri{font-size:1rem;flex-shrink:0}
+    .download-anyway{margin-top:.7rem;display:flex;align-items:center;gap:.65rem;flex-wrap:wrap}
+    .dl-warn{font-size:.76rem;color:var(--fail)}
 
-    /* ── Result section ── */
-    #result-section { display: none; margin-top: 1.25rem; }
-    #result-section.visible { display: block; }
+    /* Webcam */
+    #webcam-modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:500;align-items:center;justify-content:center}
+    #webcam-modal.visible{display:flex}
+    #webcam-box{background:#fff;border-radius:16px;padding:1.35rem;max-width:600px;width:92%;text-align:center}
+    #webcam-box h2{margin-bottom:.75rem}
+    #webcam-video{width:100%;border-radius:8px;background:#000;transform:scaleX(-1)}
+    .wc-btns{display:flex;gap:.65rem;justify-content:center;margin-top:.75rem}
 
-    .result-card {
-      border-radius: 12px; border: 1px solid; padding: 1.5rem;
-    }
-    .result-pass { background: #f0fdf4; border-color: #86efac; }
-    .result-fail { background: #fffbeb; border-color: #fcd34d; }
+    #toast{position:fixed;bottom:1.5rem;left:50%;transform:translateX(-50%);background:#1e293b;color:#fff;padding:.5rem 1rem;border-radius:99px;font-size:.81rem;opacity:0;transition:opacity .3s;pointer-events:none;z-index:999;white-space:nowrap}
+    #toast.visible{opacity:1}
 
-    .result-card h2 { font-size: 1.15rem; font-weight: 700; margin-bottom: .4rem; }
-    .result-card .sub { color: var(--muted); font-size: .85rem; margin-bottom: 1rem; line-height: 1.5; }
-
-    .result-btns { display: flex; gap: .75rem; flex-wrap: wrap; align-items: center; }
-    .result-btns + * { margin-top: .75rem; }
-
-    /* Recommendations */
-    #rec-list { list-style: none; margin: .875rem 0 1.125rem; display: grid; gap: .45rem; }
-    .rec-item {
-      display: flex; align-items: flex-start; gap: .6rem;
-      background: #fff; border: 1px solid #fde68a;
-      border-radius: 8px; padding: .6rem .85rem; font-size: .85rem; line-height: 1.45;
-    }
-    .rec-item .ri { font-size: 1.05rem; flex-shrink: 0; }
-    .download-anyway { margin-top: .875rem; display: flex; align-items: center; gap: .75rem; flex-wrap: wrap; }
-    .download-anyway .warn-txt { font-size: .78rem; color: var(--fail); }
-
-    /* ── Webcam modal ── */
-    #webcam-modal {
-      display: none; position: fixed; inset: 0;
-      background: rgba(0,0,0,.75); z-index: 500;
-      align-items: center; justify-content: center;
-    }
-    #webcam-modal.visible { display: flex; }
-    #webcam-box {
-      background: #fff; border-radius: 16px; padding: 1.5rem;
-      max-width: 620px; width: 92%; text-align: center;
-    }
-    #webcam-box h2 { margin-bottom: .875rem; }
-    #webcam-video { width: 100%; border-radius: 8px; background: #000; transform: scaleX(-1); }
-    .wc-btns { display: flex; gap: .75rem; justify-content: center; margin-top: .875rem; }
-
-    #toast {
-      position: fixed; bottom: 1.5rem; left: 50%; transform: translateX(-50%);
-      background: #1e293b; color: #fff; padding: .55rem 1.1rem;
-      border-radius: 99px; font-size: .83rem; opacity: 0;
-      transition: opacity .3s; pointer-events: none; z-index: 999; white-space: nowrap;
-    }
-    #toast.visible { opacity: 1; }
-
-    @media (max-width: 760px) {
-      #analysis-section.visible { grid-template-columns: 1fr; }
-      #photo-panel { width: 100%; }
-      #checks-panel { max-height: 60vh; }
-      main { padding: 1rem; }
+    @media(max-width:760px){
+      #analysis-section.visible{grid-template-columns:1fr}
+      #photo-panel{width:100%}
+      #checks-panel{max-height:60vh}
+      main{padding:1rem}
     }
   </style>
 </head>
@@ -205,11 +133,8 @@
 
 <div class="flag-bar"></div>
 <div class="topbar">
-  <span style="font-size:1.9rem">🇩🇪</span>
-  <div>
-    <h1>German Passport Photo Validator</h1>
-    <p>Auto-crops to 35×45 mm · 25-point biometric check · Official BMI specifications</p>
-  </div>
+  <span style="font-size:1.8rem">🇩🇪</span>
+  <div><h1>German Passport Photo Validator</h1><p>Auto-crops to 35×45 mm · 25-point biometric check · Official BMI specifications · Child exemptions included</p></div>
   <div id="model-badge"><span class="dot"></span><span id="model-txt">Loading AI…</span></div>
 </div>
 
@@ -217,46 +142,69 @@
 
 <!-- Upload -->
 <div id="upload-section">
+  <!-- Age selector -->
+  <div class="age-wrap" style="justify-content:center">
+    <span class="age-label">📋 Subject age:</span>
+    <div class="age-btns" id="age-sel-upload">
+      <button class="age-btn sel" data-age="adult">👤 Adult</button>
+      <button class="age-btn" data-age="child10">🧒 Child 7–10 yrs</button>
+      <button class="age-btn" data-age="child6">👶 Child 6 or under</button>
+    </div>
+    <span class="age-note" id="age-note-upload"></span>
+  </div>
+
   <div id="drop-zone">
     <span class="icon">📸</span>
     <h2>Upload a photo to validate</h2>
-    <p>Any photo works — we auto-crop to 35×45 mm and check all 25 requirements</p>
+    <p>Any photo works — we auto-crop to 35×45 mm then check all 25 requirements</p>
     <div class="dz-btns">
       <button class="btn btn-primary" onclick="document.getElementById('file-input').click()">📁 Choose Photo</button>
       <button class="btn btn-outline" id="webcam-open-btn">🎥 Use Camera</button>
     </div>
   </div>
   <input type="file" id="file-input" accept="image/*" />
-  <p class="privacy-note">🔒 All processing is done locally — your photo never leaves your device</p>
+  <p class="privacy-note">🔒 All processing happens locally in your browser — your photo never leaves your device</p>
 </div>
 
 <!-- Analysis -->
 <div id="analysis-section">
+
   <!-- Left: photo -->
   <div id="photo-panel">
     <div class="panel-hdr">
       <span>📷 35×45 mm Crop</span>
-      <span class="crop-label">Auto-cropped</span>
+      <span class="crop-badge">Auto-cropped</span>
     </div>
     <div id="canvas-wrap">
       <canvas id="main-canvas"></canvas>
       <canvas id="overlay-canvas"></canvas>
-      <div id="analyzing-overlay">
+      <div id="analyzing-ov">
         <div class="spinner"></div>
-        <span style="font-size:.85rem;color:var(--muted)">Analysing…</span>
+        <span style="font-size:.82rem;color:var(--muted)">Analysing…</span>
       </div>
     </div>
-    <div style="padding:.6rem .875rem;border-top:1px solid var(--border);display:flex;justify-content:space-between;align-items:center">
-      <span style="font-size:.72rem;color:var(--muted)">827×1063 px · 600 dpi</span>
+    <div style="padding:.55rem .875rem;border-top:1px solid var(--border);display:flex;justify-content:space-between;align-items:center">
+      <span style="font-size:.7rem;color:var(--muted)">827×1063 px · 600 dpi</span>
       <button class="btn btn-ghost" id="new-photo-btn">↩ New Photo</button>
     </div>
   </div>
 
-  <!-- Right: checklist -->
+  <!-- Right: checklist + age selector -->
   <div id="checks-panel">
-    <div class="panel-hdr">
-      <span>✅ 25-Point Check</span>
-      <span id="pass-counter" style="font-size:.8rem;font-weight:400;color:var(--muted)">—</span>
+    <div class="panel-hdr" style="flex-direction:column;align-items:flex-start;gap:.5rem">
+      <div style="display:flex;align-items:center;justify-content:space-between;width:100%">
+        <span>✅ 25-Point Check</span>
+        <span id="pass-counter" style="font-size:.78rem;font-weight:400;color:var(--muted)">—</span>
+      </div>
+      <!-- Age selector inside panel — changes trigger re-evaluation -->
+      <div class="age-wrap" style="margin:0">
+        <span class="age-label">Age:</span>
+        <div class="age-btns" id="age-sel-analysis">
+          <button class="age-btn sel" data-age="adult">👤 Adult</button>
+          <button class="age-btn" data-age="child10">🧒 7–10 yrs</button>
+          <button class="age-btn" data-age="child6">👶 ≤6 yrs</button>
+        </div>
+      </div>
     </div>
     <div id="checklist-scroll"><ul id="checklist"></ul></div>
     <div id="summary-bar">
@@ -264,13 +212,14 @@
       <div id="prog-bar"><div id="prog-fill" style="width:0%"></div></div>
     </div>
   </div>
+
 </div>
 
 <!-- Result -->
 <div id="result-section">
   <div id="result-pass" class="result-card result-pass" style="display:none">
-    <h2>✅ Photo passes all 25 requirements!</h2>
-    <p class="sub">Your 35×45 mm photo meets every German biometric passport requirement and is ready to submit.</p>
+    <h2>✅ Photo passes all requirements!</h2>
+    <p class="sub">Your 35×45 mm photo meets every applicable German biometric passport requirement and is ready to submit.</p>
     <div class="result-btns">
       <button class="btn btn-success" id="download-btn">⬇ Download Photo (PNG · 600 dpi)</button>
       <button class="btn btn-outline" id="reset-btn-pass">↩ Try Another Photo</button>
@@ -279,7 +228,7 @@
 
   <div id="result-fail" class="result-card result-fail" style="display:none">
     <h2>⚠ <span id="fail-count">0</span> check(s) failed — retake with these fixes:</h2>
-    <p class="sub">Your cropped photo did not meet all requirements. Follow the tips below, then take a new photo.</p>
+    <p class="sub">Your cropped photo did not meet all applicable requirements. Follow the tips below, then take a new photo.</p>
     <ul id="rec-list"></ul>
     <div class="result-btns">
       <button class="btn btn-primary" id="retry-webcam-btn">📸 Take New Photo</button>
@@ -287,7 +236,7 @@
     </div>
     <div class="download-anyway">
       <button class="btn btn-ghost" id="download-anyway-btn">⬇ Download anyway</button>
-      <span class="warn-txt">⚠ This photo may be rejected at the consulate</span>
+      <span class="dl-warn">⚠ May be rejected at the consulate</span>
     </div>
   </div>
 </div>
@@ -305,108 +254,139 @@
     </div>
   </div>
 </div>
-
 <div id="toast"></div>
 
 <script>
 'use strict';
-// ═══════════════════════════════════════════════
+// ═══════════════════════════════════════════
 // CONSTANTS
-// ═══════════════════════════════════════════════
+// ═══════════════════════════════════════════
 const MODEL_URL = 'https://cdn.jsdelivr.net/gh/justadudewhohacks/face-api.js@master/weights';
-const OUT_W = 827;   // 600 dpi at 35 mm
-const OUT_H = 1063;  // 600 dpi at 45 mm
+const OUT_W = 827, OUT_H = 1063;
 
-// German passport photo specs (BMI / Bundesdruckerei)
-const SPECS = {
-  faceH_min: 32, faceH_max: 36,          // mm, chin→crown
-  eyeFromBot_min: 27, eyeFromBot_max: 35, // mm from bottom
-  photoH: 45, photoW: 35,                 // mm
+// Baseline German passport photo specs (BMI / Bundesdruckerei)
+const SPECS = { faceH_min:32, faceH_max:36, eyeBot_min:27, eyeBot_max:35, pH:45, pW:35 };
+const HEAD_MIN = SPECS.faceH_min / SPECS.pH;   // 0.711
+const HEAD_MAX = SPECS.faceH_max / SPECS.pH;   // 0.800
+const EYE_MIN  = SPECS.eyeBot_min / SPECS.pH;  // 0.600
+const EYE_MAX  = SPECS.eyeBot_max / SPECS.pH;  // 0.778
+
+// Per-age-group thresholds.
+// 'adult'   = full official standard
+// 'child10' = 7–10 yrs: "minor deviations permitted" (relaxed but not exempt)
+// 'child6'  = ≤6 yrs:   additional exemptions for head position, expression, eye visibility
+const THRESHOLDS = {
+  adult: {
+    roll:5, yaw:.08, pitch:.14,
+    centH:.10, eyeBot:[EYE_MIN,EYE_MAX],
+    headRat:[HEAD_MIN-.05, HEAD_MAX+.08],
+    ear:.18, smile:.40, mouth:.18,
+  },
+  child10: {
+    roll:10, yaw:.16, pitch:.22,
+    centH:.18, eyeBot:[.45,.85],
+    headRat:[HEAD_MIN-.12, HEAD_MAX+.12],
+    ear:.13, smile:.65, mouth:.28,
+  },
+  child6: {
+    roll:10, yaw:.16, pitch:.22,
+    centH:.18, eyeBot:[.40,.88],
+    headRat:[HEAD_MIN-.15, HEAD_MAX+.15],
+    ear:.10, smile:.75, mouth:.35,
+  },
 };
-// As ratios of OUT_H
-const HEAD_MIN = SPECS.faceH_min / SPECS.photoH;   // 0.711
-const HEAD_MAX = SPECS.faceH_max / SPECS.photoH;   // 0.800
-const EYE_MIN  = SPECS.eyeFromBot_min / SPECS.photoH; // 0.600
-const EYE_MAX  = SPECS.eyeFromBot_max / SPECS.photoH; // 0.778
+
+// Checks fully exempted (auto-pass) for children ≤6:
+// "exceptions permitted regarding head position, facial expression and visibility of eyes"
+const EXEMPT_CHILD6 = new Set([
+  'headCenteredH','eyeHeight','headNotCropped','chinVisible', // head position
+  'noRoll','noYaw','noPitch',                                  // head orientation
+  'neutralExpr',                                               // facial expression
+  'eyesOpen',                                                  // eye visibility
+]);
 
 const CHECKS = [
-  // Image quality
-  { id:'resolution',    cat:'Image Quality', name:'Sufficient resolution',       hint:'≥413×531 px (300 dpi minimum)' },
-  { id:'sharpness',     cat:'Image Quality', name:'Sharp & in focus',            hint:'No motion blur or soft focus' },
-  { id:'brightness',    cat:'Image Quality', name:'Correct brightness',          hint:'Not too dark (underexposed)' },
-  { id:'notOverexp',    cat:'Image Quality', name:'No overexposure',             hint:'No blown-out highlights' },
-  { id:'naturalColor',  cat:'Image Quality', name:'Natural, unfiltered colors',  hint:'Not heavily saturated or filtered' },
-  // Background
-  { id:'bgLight',       cat:'Background', name:'Light/white background',         hint:'White or light grey required' },
-  { id:'bgUniform',     cat:'Background', name:'Uniform background',             hint:'No patterns, gradients or objects' },
-  { id:'bgNoShadows',   cat:'Background', name:'No shadows on background',       hint:'Even lighting across background' },
-  { id:'bgContrast',    cat:'Background', name:'Face contrasts background',      hint:'Face clearly separated from bg' },
-  { id:'bgNeutral',     cat:'Background', name:'Neutral background color',       hint:'No color cast (blue/red/yellow)' },
-  // Head position
-  { id:'faceDetected',  cat:'Head Position', name:'Face detected',               hint:'Clear frontal face visible' },
-  { id:'singleFace',    cat:'Head Position', name:'Single person only',          hint:'Only one face in photo' },
-  { id:'headCenteredH', cat:'Head Position', name:'Head centered left/right',    hint:'Face within ±10% of centre' },
-  { id:'eyeHeight',     cat:'Head Position', name:'Eyes at correct height',      hint:'Eyes 27–35 mm from bottom' },
-  { id:'headSize',      cat:'Head Position', name:'Head size correct',           hint:'Head 70–80% of photo height' },
-  { id:'headNotCropped',cat:'Head Position', name:'Crown not cut off',           hint:'Top of head fully visible' },
-  { id:'chinVisible',   cat:'Head Position', name:'Chin fully visible',          hint:'Bottom of face not cropped' },
-  // Orientation
-  { id:'noRoll',        cat:'Orientation', name:'No head tilt (roll)',           hint:'Head level — less than 5°' },
-  { id:'noYaw',         cat:'Orientation', name:'Looking straight ahead',        hint:'No left/right turn — < 8%' },
-  { id:'noPitch',       cat:'Orientation', name:'No head pitch',                 hint:'Not looking up or down' },
-  // Features
-  { id:'eyesOpen',      cat:'Facial Features', name:'Eyes open',                 hint:'Both eyes fully open' },
-  { id:'neutralExpr',   cat:'Facial Features', name:'Neutral expression',        hint:'No smile or surprise' },
-  { id:'mouthClosed',   cat:'Facial Features', name:'Mouth closed',              hint:'Lips together, teeth hidden' },
-  { id:'skinTones',     cat:'Facial Features', name:'Natural skin tones',        hint:'Realistic skin color detected' },
-  { id:'noRedEye',      cat:'Facial Features', name:'No red-eye',                hint:'Eyes not red from flash' },
+  {id:'resolution',    cat:'Image Quality',   name:'Sufficient resolution',        hint:'≥413×531 px (300 dpi minimum)'},
+  {id:'sharpness',     cat:'Image Quality',   name:'Sharp & in focus',             hint:'No motion blur or soft focus'},
+  {id:'brightness',    cat:'Image Quality',   name:'Correct brightness',           hint:'Not too dark (underexposed)'},
+  {id:'notOverexp',    cat:'Image Quality',   name:'No overexposure',              hint:'No blown-out highlights'},
+  {id:'naturalColor',  cat:'Image Quality',   name:'Natural, unfiltered colours',  hint:'Not heavily saturated or filtered'},
+  {id:'bgLight',       cat:'Background',      name:'Light/white background',       hint:'White or light grey required'},
+  {id:'bgUniform',     cat:'Background',      name:'Uniform background',           hint:'No patterns, gradients or objects'},
+  {id:'bgNoShadows',   cat:'Background',      name:'No shadows on background',     hint:'Even lighting across background'},
+  {id:'bgContrast',    cat:'Background',      name:'Face contrasts background',    hint:'Face clearly separated from bg'},
+  {id:'bgNeutral',     cat:'Background',      name:'Neutral background colour',    hint:'No colour cast (blue/red/yellow)'},
+  {id:'faceDetected',  cat:'Head Position',   name:'Face detected',                hint:'Clear frontal face visible'},
+  {id:'singleFace',    cat:'Head Position',   name:'Single person only',           hint:'Only one face in photo'},
+  {id:'headCenteredH', cat:'Head Position',   name:'Head centred left/right',      hint:'Face within ±10% of centre'},
+  {id:'eyeHeight',     cat:'Head Position',   name:'Eyes at correct height',       hint:'Eyes 27–35 mm from bottom'},
+  {id:'headSize',      cat:'Head Position',   name:'Head size correct',            hint:'Head 70–80% of photo height'},
+  {id:'headNotCropped',cat:'Head Position',   name:'Crown not cut off',            hint:'Top of head fully visible'},
+  {id:'chinVisible',   cat:'Head Position',   name:'Chin fully visible',           hint:'Bottom of face not cropped'},
+  {id:'noRoll',        cat:'Orientation',     name:'No head tilt (roll)',           hint:'Head level — less than 5°'},
+  {id:'noYaw',         cat:'Orientation',     name:'Looking straight ahead',       hint:'No left/right turn — < 8%'},
+  {id:'noPitch',       cat:'Orientation',     name:'No head pitch',                hint:'Not looking up or down'},
+  {id:'eyesOpen',      cat:'Facial Features', name:'Eyes open',                    hint:'Both eyes fully open'},
+  {id:'neutralExpr',   cat:'Facial Features', name:'Neutral expression',           hint:'No smile or surprise'},
+  {id:'mouthClosed',   cat:'Facial Features', name:'Mouth closed',                 hint:'Lips together, teeth hidden'},
+  {id:'skinTones',     cat:'Facial Features', name:'Natural skin tones',           hint:'Realistic skin colour detected'},
+  {id:'noRedEye',      cat:'Facial Features', name:'No red-eye',                   hint:'Eyes not red from flash'},
 ];
 
 const RECS = {
-  resolution:    { icon:'📐', txt:'Use a higher-resolution camera or move closer to the subject' },
-  sharpness:     { icon:'🎯', txt:'Hold the camera very still — use a timer or portrait mode to avoid blur' },
-  brightness:    { icon:'☀️', txt:'Improve lighting — face a window or use a ring light to brighten your face' },
-  notOverexp:    { icon:'💡', txt:'Reduce harsh lighting — step away from bright windows or lamps' },
-  naturalColor:  { icon:'🎨', txt:'Remove photo filters and turn off "Enhance" or beauty modes' },
-  bgLight:       { icon:'🏳️', txt:'Use a plain white or light-grey background (a blank white wall works well)' },
-  bgUniform:     { icon:'🧱', txt:'Remove patterned wallpaper, furniture or objects from behind you' },
-  bgNoShadows:   { icon:'🔦', txt:'Stand at least 1 metre from the background and add even lighting behind you' },
-  bgContrast:    { icon:'⬛', txt:'Use a lighter background so your face is clearly visible and contrasts with it' },
-  bgNeutral:     { icon:'⚪', txt:'Use a neutral white or grey background — avoid coloured walls or surfaces' },
-  headCenteredH: { icon:'↔️', txt:'Centre your face horizontally in the frame' },
-  eyeHeight:     { icon:'👁️', txt:'Adjust distance or camera angle so your eyes appear in the upper-middle of the photo' },
-  headSize:      { icon:'📏', txt:'Move closer to the camera if head is too small, or step back if it\'s too large' },
-  headNotCropped:{ icon:'⬆️', txt:'Back up or tilt the camera down so your whole head is fully visible' },
-  chinVisible:   { icon:'⬇️', txt:'Tilt the camera up or step back so your chin is not cut off at the bottom' },
-  noRoll:        { icon:'↕️', txt:'Keep your head perfectly level — do not tilt to either side' },
-  noYaw:         { icon:'↩️', txt:'Look directly into the camera — do not turn your head left or right' },
-  noPitch:       { icon:'🙅', txt:'Hold your head straight and level — do not look up or down' },
-  eyesOpen:      { icon:'👀', txt:'Open both eyes fully and look directly into the camera lens' },
-  neutralExpr:   { icon:'😐', txt:'Relax your face completely — neutral expression, no smiling or raised eyebrows' },
-  mouthClosed:   { icon:'🤐', txt:'Keep your lips gently together with your mouth closed' },
-  skinTones:     { icon:'💆', txt:'Ensure even, natural lighting on your face — avoid strong colour casts' },
-  noRedEye:      { icon:'🔴', txt:'Turn off camera flash or enable red-eye reduction mode' },
+  resolution:    {icon:'📐', txt:'Use a higher-resolution camera or move closer to the subject'},
+  sharpness:     {icon:'🎯', txt:'Hold the camera very still — use a timer or portrait mode to avoid blur'},
+  brightness:    {icon:'☀️', txt:'Improve lighting — face a window or use a ring light to brighten the face'},
+  notOverexp:    {icon:'💡', txt:'Reduce harsh lighting — step away from bright windows or lamps'},
+  naturalColor:  {icon:'🎨', txt:'Remove photo filters and turn off "Enhance" or beauty modes'},
+  bgLight:       {icon:'🏳️', txt:'Use a plain white or light-grey background (a blank white wall works well)'},
+  bgUniform:     {icon:'🧱', txt:'Remove patterned wallpaper, furniture or objects from behind the subject'},
+  bgNoShadows:   {icon:'🔦', txt:'Stand at least 1 metre from the background and ensure even lighting'},
+  bgContrast:    {icon:'⬛', txt:'Use a lighter background so the face is clearly visible and contrasts with it'},
+  bgNeutral:     {icon:'⚪', txt:'Use a neutral white or grey background — avoid coloured walls or surfaces'},
+  headCenteredH: {icon:'↔️', txt:'Centre the face horizontally in the frame'},
+  eyeHeight:     {icon:'👁️', txt:'Adjust distance or camera angle so the eyes appear in the upper-middle of the photo'},
+  headSize:      {icon:'📏', txt:'Move closer to camera if head is too small, or step back if it\'s too large'},
+  headNotCropped:{icon:'⬆️', txt:'Back up or tilt the camera down so the whole head is fully visible'},
+  chinVisible:   {icon:'⬇️', txt:'Tilt the camera up or step back so the chin is not cut off at the bottom'},
+  noRoll:        {icon:'↕️', txt:'Keep the head perfectly level — do not tilt to either side'},
+  noYaw:         {icon:'↩️', txt:'Look directly into the camera — do not turn the head left or right'},
+  noPitch:       {icon:'🙅', txt:'Hold the head straight and level — do not look up or down'},
+  eyesOpen:      {icon:'👀', txt:'Open both eyes fully and look directly into the camera lens'},
+  neutralExpr:   {icon:'😐', txt:'Relax the face — neutral expression, no smiling or raised eyebrows'},
+  mouthClosed:   {icon:'🤐', txt:'Keep the lips gently together with the mouth closed'},
+  skinTones:     {icon:'💆', txt:'Ensure even, natural lighting on the face — avoid strong colour casts'},
+  noRedEye:      {icon:'🔴', txt:'Turn off camera flash or enable red-eye reduction mode'},
 };
 
-// ═══════════════════════════════════════════════
+// ═══════════════════════════════════════════
 // STATE
-// ═══════════════════════════════════════════════
-const state = { modelsLoaded: false, croppedCanvas: null, checkResults: {} };
+// ═══════════════════════════════════════════
+const state = {
+  modelsLoaded: false,
+  ageGroup: 'adult',          // 'adult' | 'child10' | 'child6'
+  croppedCanvas: null,
+  // stored between re-evaluations:
+  savedDet2: null,
+  savedAllDets: [],
+  savedCropData: null,
+  checkResults: {},
+};
 
-// ═══════════════════════════════════════════════
+// ═══════════════════════════════════════════
 // DOM
-// ═══════════════════════════════════════════════
-const $  = id => document.getElementById(id);
+// ═══════════════════════════════════════════
+const $ = id => document.getElementById(id);
 const uploadSec   = $('upload-section');
 const analysisSec = $('analysis-section');
 const resultSec   = $('result-section');
 const mainCanvas  = $('main-canvas');
 const overlayC    = $('overlay-canvas');
-const analyzingOv = $('analyzing-overlay');
+const analyzingOv = $('analyzing-ov');
 
-// ═══════════════════════════════════════════════
+// ═══════════════════════════════════════════
 // MODEL LOADING
-// ═══════════════════════════════════════════════
+// ═══════════════════════════════════════════
 (async () => {
   try {
     await Promise.all([
@@ -415,15 +395,42 @@ const analyzingOv = $('analyzing-overlay');
       faceapi.nets.faceExpressionNet.loadFromUri(MODEL_URL),
     ]);
     state.modelsLoaded = true;
-    const b = $('model-badge'); b.classList.add('ready'); $('model-txt').textContent = 'AI ready';
+    $('model-badge').classList.add('ready'); $('model-txt').textContent = 'AI ready';
   } catch {
-    const b = $('model-badge'); b.classList.add('err'); $('model-txt').textContent = 'Model load failed';
+    $('model-badge').classList.add('err'); $('model-txt').textContent = 'Model load failed';
   }
 })();
 
-// ═══════════════════════════════════════════════
-// INPUT HANDLING
-// ═══════════════════════════════════════════════
+// ═══════════════════════════════════════════
+// AGE SELECTOR
+// ═══════════════════════════════════════════
+const AGE_NOTES = {
+  adult:   '',
+  child10: '↳ Minor deviations permitted for orientation, position & expression',
+  child6:  '↳ Head position, facial expression & eye visibility are exempt',
+};
+
+function setupAgeSel(containerId, noteId) {
+  const container = $(containerId);
+  container.querySelectorAll('.age-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      // Sync both selectors
+      ['age-sel-upload','age-sel-analysis'].forEach(sid => {
+        document.querySelectorAll(`#${sid} .age-btn`).forEach(b => b.classList.toggle('sel', b.dataset.age === btn.dataset.age));
+      });
+      state.ageGroup = btn.dataset.age;
+      if (noteId) $(noteId).textContent = AGE_NOTES[btn.dataset.age];
+      // Re-evaluate if we already have data
+      if (state.savedCropData) reevaluate();
+    });
+  });
+}
+setupAgeSel('age-sel-upload', 'age-note-upload');
+setupAgeSel('age-sel-analysis', null);
+
+// ═══════════════════════════════════════════
+// FILE / WEBCAM INPUT
+// ═══════════════════════════════════════════
 $('file-input').addEventListener('change', e => { if (e.target.files[0]) loadFile(e.target.files[0]); });
 
 const dz = $('drop-zone');
@@ -441,7 +448,6 @@ function loadFile(f) {
   img.src = url;
 }
 
-// Webcam
 $('webcam-open-btn').addEventListener('click', openCam);
 $('retry-webcam-btn').addEventListener('click', openCam);
 $('capture-btn').addEventListener('click', captureCam);
@@ -449,507 +455,423 @@ $('webcam-close-btn').addEventListener('click', closeCam);
 
 async function openCam() {
   try {
-    const stream = await navigator.mediaDevices.getUserMedia({ video:{ width:{ideal:1920}, height:{ideal:1080}, facingMode:'user' }});
-    $('webcam-video').srcObject = stream;
+    $('webcam-video').srcObject = await navigator.mediaDevices.getUserMedia({ video:{width:{ideal:1920},height:{ideal:1080},facingMode:'user'}});
     $('webcam-modal').classList.add('visible');
   } catch { showToast('Camera access denied'); }
 }
 function captureCam() {
   const v = $('webcam-video');
-  const c = document.createElement('canvas'); c.width = v.videoWidth; c.height = v.videoHeight;
-  c.getContext('2d').drawImage(v, 0, 0);
-  closeCam();
-  const img = new Image(); img.onload = () => processImage(img); img.src = c.toDataURL('image/jpeg', .95);
+  const c = document.createElement('canvas'); c.width=v.videoWidth; c.height=v.videoHeight;
+  c.getContext('2d').drawImage(v,0,0); closeCam();
+  const img = new Image(); img.onload = () => processImage(img); img.src = c.toDataURL('image/jpeg',.95);
 }
 function closeCam() {
-  const s = $('webcam-video').srcObject;
-  if (s) s.getTracks().forEach(t => t.stop());
-  $('webcam-video').srcObject = null;
-  $('webcam-modal').classList.remove('visible');
+  const s=$('webcam-video').srcObject; if(s) s.getTracks().forEach(t=>t.stop());
+  $('webcam-video').srcObject=null; $('webcam-modal').classList.remove('visible');
 }
 
-// Reset
-['new-photo-btn','reset-btn-pass'].forEach(id => $( id).addEventListener('click', reset));
+['new-photo-btn','reset-btn-pass'].forEach(id => $(id).addEventListener('click', reset));
 function reset() {
-  uploadSec.style.display = '';
-  analysisSec.classList.remove('visible');
-  resultSec.classList.remove('visible');
-  $('file-input').value = '';
-  state.croppedCanvas = null; state.checkResults = {};
+  uploadSec.style.display=''; analysisSec.classList.remove('visible'); resultSec.classList.remove('visible');
+  $('file-input').value='';
+  state.croppedCanvas=null; state.savedDet2=null; state.savedAllDets=[]; state.savedCropData=null; state.checkResults={};
 }
 
-// ═══════════════════════════════════════════════
+// ═══════════════════════════════════════════
 // MAIN PIPELINE
-// ═══════════════════════════════════════════════
+// ═══════════════════════════════════════════
 async function processImage(img) {
-  // Show UI
   uploadSec.style.display = 'none';
   analysisSec.classList.add('visible');
   resultSec.classList.remove('visible');
-  $('result-pass').style.display = 'none';
-  $('result-fail').style.display = 'none';
+  $('result-pass').style.display='none'; $('result-fail').style.display='none';
   analyzingOv.classList.add('visible');
   renderChecklist({});
 
-  const origW = img.naturalWidth, origH = img.naturalHeight;
-
-  // ── Pass 1: detect on original for crop placement ──
+  // ── Pass 1: detect on original for crop ──
   let det0 = null;
   if (state.modelsLoaded) {
     try {
       det0 = await faceapi
-        .detectSingleFace(img, new faceapi.TinyFaceDetectorOptions({ scoreThreshold: 0.35 }))
+        .detectSingleFace(img, new faceapi.TinyFaceDetectorOptions({scoreThreshold:.35}))
         .withFaceLandmarks(true);
     } catch {}
   }
 
-  // ── Compute crop region ──
-  const crop = computeCrop(det0, origW, origH);
+  // ── Crop ──
+  const crop = computeCrop(det0, img.naturalWidth, img.naturalHeight);
 
-  // ── Render crop → working canvas ──
-  const wc = document.createElement('canvas');
-  wc.width = OUT_W; wc.height = OUT_H;
-  const wctx = wc.getContext('2d');
-  wctx.imageSmoothingEnabled = true; wctx.imageSmoothingQuality = 'high';
+  // ── Render crop ──
+  const wc = document.createElement('canvas'); wc.width=OUT_W; wc.height=OUT_H;
+  const wctx = wc.getContext('2d'); wctx.imageSmoothingEnabled=true; wctx.imageSmoothingQuality='high';
   wctx.drawImage(img, crop.x, crop.y, crop.w, crop.h, 0, 0, OUT_W, OUT_H);
   state.croppedCanvas = wc;
 
-  // Show crop in main canvas
-  mainCanvas.width = OUT_W; mainCanvas.height = OUT_H;
-  mainCanvas.getContext('2d').drawImage(wc, 0, 0);
+  mainCanvas.width=OUT_W; mainCanvas.height=OUT_H;
+  mainCanvas.getContext('2d').drawImage(wc,0,0);
+
+  const cropData = wctx.getImageData(0, 0, OUT_W, OUT_H);
+  state.savedCropData = cropData;
 
   // ── Pass 2: detect on cropped canvas ──
-  let det2 = null, allDets = [];
+  let det2=null, allDets=[];
   if (state.modelsLoaded) {
     try {
       [det2, allDets] = await Promise.all([
-        faceapi.detectSingleFace(wc, new faceapi.TinyFaceDetectorOptions({ scoreThreshold: 0.35 }))
+        faceapi.detectSingleFace(wc, new faceapi.TinyFaceDetectorOptions({scoreThreshold:.35}))
           .withFaceLandmarks(true).withFaceExpressions(),
-        faceapi.detectAllFaces(wc, new faceapi.TinyFaceDetectorOptions({ scoreThreshold: 0.35 })),
+        faceapi.detectAllFaces(wc, new faceapi.TinyFaceDetectorOptions({scoreThreshold:.35})),
       ]);
     } catch {}
     allDets = allDets || [];
   }
+  state.savedDet2 = det2; state.savedAllDets = allDets;
 
-  // ── Pixel data from cropped image ──
-  const cropData = wctx.getImageData(0, 0, OUT_W, OUT_H);
-
-  // ── Run all checks on cropped image ──
-  const imgChecks  = runImageChecks(wc, cropData);
-  const faceChecks = runFaceChecks(det2, allDets, OUT_W, OUT_H, cropData);
-  state.checkResults = { ...imgChecks, ...faceChecks };
-
-  // ── Draw overlay on cropped canvas ──
-  drawOverlay(det2, OUT_W, OUT_H);
-
-  // ── UI update ──
-  renderChecklist(state.checkResults);
-  updateSummary();
-  showResult();
+  reevaluate();
   analyzingOv.classList.remove('visible');
 }
 
-// ═══════════════════════════════════════════════
-// CROP COMPUTATION
-// ═══════════════════════════════════════════════
-function computeCrop(det, imgW, imgH) {
-  if (!det) {
-    // Fallback: centre-crop at 35:45 ratio
-    const cropH = Math.min(imgH, imgW * (45/35));
-    const cropW = cropH * (35/45);
-    return { x:(imgW-cropW)/2|0, y:(imgH-cropH)/2|0, w:cropW|0, h:cropH|0 };
-  }
+// Called on first load AND whenever age group changes
+function reevaluate() {
+  const {savedDet2:det, savedAllDets:all, savedCropData:data, ageGroup} = state;
+  if (!data) return;
 
-  const lm  = det.landmarks;
-  const box = det.detection.box;
-  const jaw = lm.getJawOutline();
-  const chin = jaw[8];
-  const leye = avgPt(lm.getLeftEye());
-  const reye = avgPt(lm.getRightEye());
-  const eyeMidY = (leye.y + reye.y) / 2;
-  const eyeMidX = (leye.x + reye.x) / 2;
+  const imgQ  = runImageChecks(data);
+  const faceQ = runFaceChecks(det, all, OUT_W, OUT_H, data, ageGroup);
+  state.checkResults = {...imgQ, ...faceQ};
 
-  // Estimate crown (15% above face bounding box top)
-  const crownY  = box.top - box.height * 0.15;
-  const headPx  = chin.y - crownY;
-
-  // Target: head = 76% of crop height; eyes at 33% from top
-  const cropH = Math.round(headPx / 0.76);
-  const cropW = Math.round(cropH * (35/45));
-  const cropY = Math.round(eyeMidY - 0.33 * cropH);
-  const cropX = Math.round(eyeMidX - cropW / 2);
-
-  // Clamp
-  const x = Math.max(0, cropX),           y = Math.max(0, cropY);
-  const w = Math.min(cropW, imgW - x),    h = Math.min(cropH, imgH - y);
-  return { x, y, w, h };
+  drawOverlay(det, OUT_W, OUT_H);
+  renderChecklist(state.checkResults);
+  updateSummary();
+  showResult();
 }
 
-// ═══════════════════════════════════════════════
-// IMAGE QUALITY CHECKS
-// ═══════════════════════════════════════════════
-function runImageChecks(canvas, data) {
-  const W = canvas.width, H = canvas.height;
-  const r = {};
+// ═══════════════════════════════════════════
+// CROP COMPUTATION
+// ═══════════════════════════════════════════
+function computeCrop(det, imgW, imgH) {
+  if (!det) {
+    const cropH = Math.min(imgH, imgW*(45/35)); const cropW = cropH*(35/45);
+    return {x:(imgW-cropW)/2|0, y:(imgH-cropH)/2|0, w:cropW|0, h:cropH|0};
+  }
+  const lm=det.landmarks, box=det.detection.box;
+  const chin=lm.getJawOutline()[8];
+  const le=avg(lm.getLeftEye()), re=avg(lm.getRightEye());
+  const eyeMidX=(le.x+re.x)/2, eyeMidY=(le.y+re.y)/2;
+  const crownY = box.top - box.height*0.15;
+  const headPx = chin.y - crownY;
+  const cropH  = Math.round(headPx/0.76);
+  const cropW  = Math.round(cropH*(35/45));
+  const cropY  = Math.round(eyeMidY - 0.33*cropH);
+  const cropX  = Math.round(eyeMidX - cropW/2);
+  const x=Math.max(0,cropX), y=Math.max(0,cropY);
+  return {x, y, w:Math.min(cropW,imgW-x), h:Math.min(cropH,imgH-y)};
+}
 
-  // Resolution
-  const resOK = W >= 413 && H >= 531;
-  r.resolution = { pass: resOK, detail: `${W}×${H} px (need ≥413×531)` };
-
-  // Sharpness
-  const sharp = laplacianVariance(data, W, H);
-  r.sharpness = { pass: sharp > 55, detail: `Sharpness score: ${sharp.toFixed(0)} (min 55)` };
-
-  // Exposure
-  const { avgL, overPct, underPct } = exposure(data);
-  r.brightness = { pass: avgL > 60 && underPct < 0.15, detail: `Avg brightness: ${avgL.toFixed(0)}/255, dark pixels: ${(underPct*100).toFixed(1)}%` };
-  r.notOverexp  = { pass: overPct < 0.06,              detail: `Overexposed pixels: ${(overPct*100).toFixed(1)}% (max 6%)` };
-
-  // Natural colour (average saturation)
-  const sat = avgSaturation(data);
-  r.naturalColor = { pass: sat < 0.72, detail: `Avg saturation: ${(sat*100).toFixed(0)}% (max 72%)` };
-
-  // Background (sample corners of the cropped image)
-  const bg = backgroundStats(data, W, H);
-  r.bgLight     = { pass: bg.avgL > 175, detail: `Background brightness: ${bg.avgL.toFixed(0)}/255 (min 175)` };
-  r.bgUniform   = { pass: bg.stdL < 22,  detail: `Background std dev: ±${bg.stdL.toFixed(0)} (max ±22)` };
-  r.bgNoShadows = { pass: bg.spread < 30,detail: `Background shadow spread: ${bg.spread.toFixed(0)} (max 30)` };
-  r.bgNeutral   = { pass: bg.colorDev < 28, detail: `Background colour cast: ${bg.colorDev.toFixed(0)} (max 28)` };
-  r.bgContrast  = { pass: true, detail: 'Checked after face detection' }; // updated below
-
+// ═══════════════════════════════════════════
+// IMAGE QUALITY CHECKS (age-independent)
+// ═══════════════════════════════════════════
+function runImageChecks(data) {
+  const W=OUT_W, H=OUT_H, r={};
+  r.resolution  = {pass:W>=413&&H>=531,         detail:`${W}×${H} px (need ≥413×531)`};
+  const sh=laplacian(data,W,H);
+  r.sharpness   = {pass:sh>55,                  detail:`Sharpness score: ${sh.toFixed(0)} (min 55)`};
+  const {avgL,overP,underP}=exposure(data);
+  r.brightness  = {pass:avgL>60&&underP<.15,    detail:`Avg brightness: ${avgL.toFixed(0)}/255, dark pixels: ${(underP*100).toFixed(1)}%`};
+  r.notOverexp  = {pass:overP<.06,              detail:`Overexposed pixels: ${(overP*100).toFixed(1)}% (max 6%)`};
+  const sat=avgSat(data);
+  r.naturalColor= {pass:sat<.72,                detail:`Avg saturation: ${(sat*100).toFixed(0)}% (max 72%)`};
+  const bg=bgStats(data,W,H);
+  r.bgLight     = {pass:bg.avgL>175,            detail:`Background brightness: ${bg.avgL.toFixed(0)}/255 (min 175)`};
+  r.bgUniform   = {pass:bg.std<22,              detail:`Background std dev: ±${bg.std.toFixed(0)} (max ±22)`};
+  r.bgNoShadows = {pass:bg.spread<30,           detail:`Background shadow spread: ${bg.spread.toFixed(0)} (max 30)`};
+  r.bgNeutral   = {pass:bg.colorDev<28,         detail:`Background colour cast: ${bg.colorDev.toFixed(0)} (max 28)`};
+  r.bgContrast  = {pass:true,                   detail:'Will refine after face detection'};
   return r;
 }
 
-// ═══════════════════════════════════════════════
-// FACE CHECKS (all in cropped-canvas coordinates)
-// ═══════════════════════════════════════════════
-function runFaceChecks(det, allDets, W, H, data) {
-  const r = {};
+// ═══════════════════════════════════════════
+// FACE CHECKS (age-aware)
+// ═══════════════════════════════════════════
+function runFaceChecks(det, allDets, W, H, data, ageGroup) {
+  const r = {}, T = THRESHOLDS[ageGroup];
+  const isChild6 = ageGroup === 'child6';
+  const isChild  = ageGroup === 'child10' || ageGroup === 'child6';
+  const exemptTag = 'Exempt — exceptions permitted for children aged 6 and under';
 
-  // 11. Face detected
-  r.faceDetected = { pass: !!det, detail: det ? 'Face detected ✓' : 'No face found — ensure you are clearly visible' };
+  // Helper: auto-pass a check if exempt
+  const maybeExempt = (id, fn) => {
+    if (isChild6 && EXEMPT_CHILD6.has(id)) return {pass:true, exempt:true, detail:exemptTag};
+    return fn();
+  };
 
-  // 12. Single face
-  const fc = allDets.length || (det ? 1 : 0);
-  r.singleFace = { pass: fc === 1, detail: `${fc} face(s) detected (need exactly 1)` };
+  r.faceDetected = {pass:!!det, detail: det ? 'Face detected ✓' : 'No face found — ensure you are clearly visible'};
+
+  const fc = allDets.length || (det?1:0);
+  r.singleFace = {pass:fc===1, detail:`${fc} face(s) detected (need exactly 1)`};
 
   if (!det) {
-    const noFace = { pass: false, detail: 'Cannot check — no face detected' };
+    const noFace = {pass:false, detail:'Cannot check — no face detected'};
     ['headCenteredH','eyeHeight','headSize','headNotCropped','chinVisible',
-     'noRoll','noYaw','noPitch','eyesOpen','neutralExpr','mouthClosed',
-     'skinTones','noRedEye','bgContrast'].forEach(k => r[k] = noFace);
+     'noRoll','noYaw','noPitch','eyesOpen','neutralExpr','mouthClosed','skinTones','noRedEye','bgContrast']
+      .forEach(k => r[k] = isChild6 && EXEMPT_CHILD6.has(k) ? {pass:true,exempt:true,detail:exemptTag} : noFace);
     return r;
   }
 
-  const lm  = det.landmarks;
-  const box = det.detection.box;
-  const jaw = lm.getJawOutline();
-  const chin = jaw[8];
-  const le = avgPt(lm.getLeftEye()), re = avgPt(lm.getRightEye());
-  const eyeMidY = (le.y + re.y) / 2, eyeMidX = (le.x + re.x) / 2;
-  const crownY  = box.top - box.height * 0.15;
-  const headH   = chin.y - crownY;
+  const lm=det.landmarks, box=det.detection.box;
+  const jaw=lm.getJawOutline(), chin=jaw[8];
+  const le=avg(lm.getLeftEye()), re=avg(lm.getRightEye());
+  const eyeMidY=(le.y+re.y)/2, eyeMidX=(le.x+re.x)/2;
+  const crownY=box.top-box.height*0.15, headH=chin.y-crownY;
 
-  // 13. Horizontal centre
-  const hOff = Math.abs(eyeMidX - W/2) / W;
-  r.headCenteredH = { pass: hOff < 0.10, detail: `Horizontal offset: ${(hOff*100).toFixed(1)}% (max 10%)` };
+  // 13. Head centred H
+  r.headCenteredH = maybeExempt('headCenteredH', () => {
+    const off=Math.abs(eyeMidX-W/2)/W;
+    return {pass:off<T.centH, detail:`Horizontal offset: ${(off*100).toFixed(1)}% (max ${(T.centH*100).toFixed(0)}%)`+(isChild?' [child standard]':'')};
+  });
 
-  // 14. Eye height from bottom
-  const eyeBot = (H - eyeMidY) / H;
-  const eyeMM  = (eyeBot * 45).toFixed(1);
-  r.eyeHeight = { pass: eyeBot >= EYE_MIN && eyeBot <= EYE_MAX,
-    detail: `Eyes ${eyeMM} mm from bottom (need 27–35 mm)` };
+  // 14. Eye height
+  r.eyeHeight = maybeExempt('eyeHeight', () => {
+    const bot=(H-eyeMidY)/H, mm=(bot*45).toFixed(1);
+    return {pass:bot>=T.eyeBot[0]&&bot<=T.eyeBot[1], detail:`Eyes ${mm} mm from bottom (need ${SPECS.eyeBot_min}–${SPECS.eyeBot_max} mm)`+(isChild?' [child standard]':'')};
+  });
 
   // 15. Head size
-  const headRat = headH / H;
-  const headMM  = (headRat * 45).toFixed(1);
-  r.headSize = { pass: headRat >= HEAD_MIN - 0.05 && headRat <= HEAD_MAX + 0.08,
-    detail: `Head height ~${headMM} mm (need 32–36 mm, i.e. 70–80%)` };
+  const hrat=headH/H, hmm=(hrat*45).toFixed(1);
+  r.headSize = {pass:hrat>=T.headRat[0]&&hrat<=T.headRat[1], detail:`Head height ~${hmm} mm (need 32–36 mm, 70–80%)`+(isChild?' [child standard]':'')};
 
   // 16. Crown not cropped
-  const crownMargin = crownY / H;
-  r.headNotCropped = { pass: crownY > 5 && crownMargin > 0.01,
-    detail: `Space above crown: ${(crownMargin*100).toFixed(1)}% (need > 1%)` };
+  r.headNotCropped = maybeExempt('headNotCropped', () => {
+    const cm=crownY/H; return {pass:crownY>5&&cm>0.01, detail:`Space above crown: ${(cm*100).toFixed(1)}% (need > 1%)`};
+  });
 
   // 17. Chin visible
-  const chinBot = (H - chin.y) / H;
-  r.chinVisible = { pass: chinBot > 0.02 && chin.y < H - 5,
-    detail: `Space below chin: ${(chinBot*100).toFixed(1)}% (need > 2%)` };
+  r.chinVisible = maybeExempt('chinVisible', () => {
+    const cb=(H-chin.y)/H; return {pass:cb>0.02&&chin.y<H-5, detail:`Space below chin: ${(cb*100).toFixed(1)}% (need > 2%)`};
+  });
 
   // 18. Roll
-  const dx = re.x - le.x, dy = re.y - le.y;
-  const roll = Math.atan2(dy, dx) * 180 / Math.PI;
-  r.noRoll = { pass: Math.abs(roll) < 5, detail: `Head tilt: ${roll.toFixed(1)}° (max ±5°)` };
+  r.noRoll = maybeExempt('noRoll', () => {
+    const dx=re.x-le.x, dy=re.y-le.y, roll=Math.atan2(dy,dx)*180/Math.PI;
+    return {pass:Math.abs(roll)<T.roll, detail:`Head tilt: ${roll.toFixed(1)}° (max ±${T.roll}°)`+(isChild?' [child standard]':'')};
+  });
 
-  // 19. Yaw — nose offset from eye midpoint
-  const nose   = lm.getNose();
-  const noseTip = nose[3];
-  const yawOff = (noseTip.x - eyeMidX) / box.width;
-  r.noYaw = { pass: Math.abs(yawOff) < 0.08, detail: `Horizontal turn: ${(yawOff*100).toFixed(1)}% (max ±8%)` };
+  // 19. Yaw
+  r.noYaw = maybeExempt('noYaw', () => {
+    const nose=lm.getNose(), nt=nose[3], yaw=(nt.x-eyeMidX)/box.width;
+    return {pass:Math.abs(yaw)<T.yaw, detail:`Horizontal turn: ${(yaw*100).toFixed(1)}% (max ±${(T.yaw*100).toFixed(0)}%)`+(isChild?' [child standard]':'')};
+  });
 
   // 20. Pitch
-  const eyeToChin = chin.y - eyeMidY;
-  const pitchOff  = (noseTip.y - (eyeMidY + eyeToChin * 0.40)) / Math.max(eyeToChin, 1);
-  r.noPitch = { pass: Math.abs(pitchOff) < 0.14, detail: `Vertical pitch: ${(pitchOff*100).toFixed(1)}% (max ±14%)` };
+  r.noPitch = maybeExempt('noPitch', () => {
+    const nose=lm.getNose(),nt=nose[3],eyeToChin=chin.y-eyeMidY;
+    const pitch=(nt.y-(eyeMidY+eyeToChin*.40))/Math.max(eyeToChin,1);
+    return {pass:Math.abs(pitch)<T.pitch, detail:`Vertical pitch: ${(pitch*100).toFixed(1)}% (max ±${(T.pitch*100).toFixed(0)}%)`+(isChild?' [child standard]':'')};
+  });
 
-  // 21. Eyes open (EAR)
-  const ear = pts => { const v1=d(pts[1],pts[5]),v2=d(pts[2],pts[4]),h=d(pts[0],pts[3]); return h>0?(v1+v2)/(2*h):0; };
-  const avgEAR = (ear(lm.getLeftEye()) + ear(lm.getRightEye())) / 2;
-  r.eyesOpen = { pass: avgEAR > 0.18, detail: `Eye aspect ratio: ${avgEAR.toFixed(3)} (min 0.18)` };
+  // 21. Eyes open
+  r.eyesOpen = maybeExempt('eyesOpen', () => {
+    const ear=pts=>{const v1=d(pts[1],pts[5]),v2=d(pts[2],pts[4]),h=d(pts[0],pts[3]);return h>0?(v1+v2)/(2*h):0;};
+    const e=(ear(lm.getLeftEye())+ear(lm.getRightEye()))/2;
+    return {pass:e>T.ear, detail:`Eye aspect ratio: ${e.toFixed(3)} (min ${T.ear})`+(isChild?' [child standard]':'')};
+  });
 
   // 22. Expression
-  const ex = det.expressions;
-  const tooBig = v => v > 0.40;
-  r.neutralExpr = { pass: !tooBig(ex.happy||0) && !tooBig(ex.surprised||0) && !tooBig(ex.angry||0),
-    detail: `Neutral:${((ex.neutral||0)*100).toFixed(0)}% Happy:${((ex.happy||0)*100).toFixed(0)}% Surprised:${((ex.surprised||0)*100).toFixed(0)}%` };
+  r.neutralExpr = maybeExempt('neutralExpr', () => {
+    const ex=det.expressions, big=v=>v>T.smile;
+    return {pass:!big(ex.happy||0)&&!big(ex.surprised||0)&&!big(ex.angry||0),
+      detail:`Neutral:${((ex.neutral||0)*100).toFixed(0)}% Happy:${((ex.happy||0)*100).toFixed(0)}% Surprised:${((ex.surprised||0)*100).toFixed(0)}%`+(isChild?' [child standard]':'')};
+  });
 
   // 23. Mouth closed
-  const mouth = lm.getMouth();
-  const mOpen = d(mouth[14], mouth[18]);
-  const mWide = d(mouth[0],  mouth[6]);
-  const mRat  = mWide > 0 ? mOpen / mWide : 0;
-  r.mouthClosed = { pass: mRat < 0.18, detail: `Mouth open ratio: ${(mRat*100).toFixed(1)}% (max 18%)` };
+  const mouth=lm.getMouth(), mOpen=d(mouth[14],mouth[18]), mWide=d(mouth[0],mouth[6]);
+  const mrat=mWide>0?mOpen/mWide:0;
+  r.mouthClosed = {pass:mrat<T.mouth, detail:`Mouth open ratio: ${(mrat*100).toFixed(1)}% (max ${(T.mouth*100).toFixed(0)}%)`+(isChild?' [child standard]':'')};
 
   // 24. Skin tones
-  const sk = checkSkin(data, lm, W, H);
-  r.skinTones = sk;
+  r.skinTones = checkSkin(data, lm, W, H);
 
   // 25. Red-eye
   r.noRedEye = checkRedEye(data, lm, W, H);
 
-  // Update bgContrast
-  const faceLum = sampleLum(data, W, box.x, box.y, box.width, box.height);
-  const bgStats = backgroundStats(data, W, H);
-  const diff = bgStats.avgL - faceLum;
-  r.bgContrast = { pass: diff > 25, detail: `Background − face brightness: ${diff.toFixed(0)} (min 25)` };
+  // bgContrast now we have face box
+  const faceLum=sampleLum(data,W,box.x,box.y,box.width,box.height);
+  const bgL=bgStats(data,W,H).avgL, diff=bgL-faceLum;
+  r.bgContrast = {pass:diff>25, detail:`Background − face brightness: ${diff.toFixed(0)} (min 25)`};
 
   return r;
 }
 
-// ═══════════════════════════════════════════════
+// ═══════════════════════════════════════════
 // PIXEL HELPERS
-// ═══════════════════════════════════════════════
-function avgPt(pts) { return { x: pts.reduce((s,p)=>s+p.x,0)/pts.length, y: pts.reduce((s,p)=>s+p.y,0)/pts.length }; }
-function d(a,b)     { return Math.sqrt((a.x-b.x)**2+(a.y-b.y)**2); }
+// ═══════════════════════════════════════════
+function avg(pts) { return {x:pts.reduce((s,p)=>s+p.x,0)/pts.length, y:pts.reduce((s,p)=>s+p.y,0)/pts.length}; }
+function d(a,b)   { return Math.sqrt((a.x-b.x)**2+(a.y-b.y)**2); }
 
-function laplacianVariance(data, W, H) {
-  const { data: px } = data;
-  const gray = new Float32Array(W * H);
-  for (let i=0;i<gray.length;i++) gray[i] = 0.299*px[i*4]+0.587*px[i*4+1]+0.114*px[i*4+2];
-  const x0=W*.2|0, x1=W*.8|0, y0=H*.2|0, y1=H*.8|0;
+function laplacian(data, W, H) {
+  const {data:px}=data, g=new Float32Array(W*H);
+  for(let i=0;i<g.length;i++) g[i]=0.299*px[i*4]+0.587*px[i*4+1]+0.114*px[i*4+2];
+  const x0=W*.2|0,x1=W*.8|0,y0=H*.2|0,y1=H*.8|0;
   let s=0,s2=0,n=0;
-  for (let y=Math.max(1,y0);y<Math.min(H-1,y1);y++) for (let x=Math.max(1,x0);x<Math.min(W-1,x1);x++) {
+  for(let y=Math.max(1,y0);y<Math.min(H-1,y1);y++) for(let x=Math.max(1,x0);x<Math.min(W-1,x1);x++){
     const i=y*W+x;
-    const v=-gray[i-W-1]-gray[i-W]-gray[i-W+1]-gray[i-1]+8*gray[i]-gray[i+1]-gray[i+W-1]-gray[i+W]-gray[i+W+1];
+    const v=-g[i-W-1]-g[i-W]-g[i-W+1]-g[i-1]+8*g[i]-g[i+1]-g[i+W-1]-g[i+W]-g[i+W+1];
     s+=v; s2+=v*v; n++;
   }
-  return Math.sqrt(Math.max(0, s2/n - (s/n)**2));
+  return Math.sqrt(Math.max(0,s2/n-(s/n)**2));
 }
 
 function exposure(data) {
-  const { data: px } = data; let tL=0,over=0,under=0,n=px.length/4;
-  for (let i=0;i<n;i++) { const L=0.299*px[i*4]+0.587*px[i*4+1]+0.114*px[i*4+2]; tL+=L; if(L>240)over++; if(L<40)under++; }
-  return { avgL:tL/n, overPct:over/n, underPct:under/n };
+  const {data:px}=data; let tL=0,ov=0,un=0,n=px.length/4;
+  for(let i=0;i<n;i++){const L=0.299*px[i*4]+0.587*px[i*4+1]+0.114*px[i*4+2];tL+=L;if(L>240)ov++;if(L<40)un++;}
+  return {avgL:tL/n, overP:ov/n, underP:un/n};
 }
-
-function avgSaturation(data) {
-  const { data: px } = data; let t=0,n=px.length/4;
-  for (let i=0;i<n;i++) { const r=px[i*4]/255,g=px[i*4+1]/255,b=px[i*4+2]/255,mx=Math.max(r,g,b),mn=Math.min(r,g,b); t+=mx>0?(mx-mn)/mx:0; }
+function avgSat(data) {
+  const {data:px}=data; let t=0,n=px.length/4;
+  for(let i=0;i<n;i++){const r=px[i*4]/255,g=px[i*4+1]/255,b=px[i*4+2]/255,mx=Math.max(r,g,b),mn=Math.min(r,g,b);t+=mx>0?(mx-mn)/mx:0;}
   return t/n;
 }
-
-function backgroundStats(data, W, H) {
-  const m=Math.floor(Math.min(W,H)*0.03), sw=Math.floor(W*.11), sh=Math.floor(H*.09);
-  const regions=[{x:m,y:m},{x:W-m-sw,y:m},{x:m,y:H-m-sh},{x:W-m-sw,y:H-m-sh},{x:(W/2-sw/2)|0,y:m}];
-  const samp=regions.map(r=>sampleRGB(data,W,r.x,r.y,sw,sh));
+function bgStats(data, W, H) {
+  const m=Math.floor(Math.min(W,H)*.03),sw=Math.floor(W*.11),sh=Math.floor(H*.09);
+  const regs=[{x:m,y:m},{x:W-m-sw,y:m},{x:m,y:H-m-sh},{x:W-m-sw,y:H-m-sh},{x:(W/2-sw/2)|0,y:m}];
+  const samp=regs.map(r=>sampRGB(data,W,r.x,r.y,sw,sh));
   const Ls=samp.map(s=>0.299*s.r+0.587*s.g+0.114*s.b);
   const avgL=Ls.reduce((a,v)=>a+v,0)/Ls.length;
-  const stdL=Math.sqrt(Ls.reduce((a,v)=>a+(v-avgL)**2,0)/Ls.length);
+  const std=Math.sqrt(Ls.reduce((a,v)=>a+(v-avgL)**2,0)/Ls.length);
   const spread=Math.max(...Ls)-Math.min(...Ls);
-  const aR=samp.reduce((a,s)=>a+s.r,0)/samp.length, aG=samp.reduce((a,s)=>a+s.g,0)/samp.length, aB=samp.reduce((a,s)=>a+s.b,0)/samp.length;
-  const colorDev=Math.max(Math.abs(aR-aG),Math.abs(aG-aB),Math.abs(aR-aB));
-  return { avgL, stdL, spread, colorDev };
+  const aR=samp.reduce((a,s)=>a+s.r,0)/samp.length,aG=samp.reduce((a,s)=>a+s.g,0)/samp.length,aB=samp.reduce((a,s)=>a+s.b,0)/samp.length;
+  return {avgL, std, spread, colorDev:Math.max(Math.abs(aR-aG),Math.abs(aG-aB),Math.abs(aR-aB))};
 }
-
-function sampleRGB(data, W, x, y, w, h) {
-  const { data: px } = data; let r=0,g=0,b=0,n=0;
-  for (let dy=0;dy<h;dy++) for (let dx=0;dx<w;dx++) {
+function sampRGB(data,W,x,y,w,h){
+  const {data:px}=data; let r=0,g=0,b=0,n=0;
+  for(let dy=0;dy<h;dy++) for(let dx=0;dx<w;dx++){
     const nx=Math.round(x+dx),ny=Math.round(y+dy);
     if(nx>=0&&nx<W&&ny>=0&&ny<data.height){const i=(ny*W+nx)*4;r+=px[i];g+=px[i+1];b+=px[i+2];n++;}
   }
   return n>0?{r:r/n,g:g/n,b:b/n}:{r:128,g:128,b:128};
 }
-
-function sampleLum(data, W, x, y, w, h) { const s=sampleRGB(data,W,x,y,w,h); return 0.299*s.r+0.587*s.g+0.114*s.b; }
+function sampleLum(data,W,x,y,w,h){const s=sampRGB(data,W,x,y,w,h);return 0.299*s.r+0.587*s.g+0.114*s.b;}
 
 function checkSkin(data, lm, W, H) {
-  const le=avgPt(lm.getLeftEye()),re=avgPt(lm.getRightEye()),jaw=lm.getJawOutline();
-  const sz=Math.floor(Math.min(W,H)*0.04);
-  const lc={x:(le.x+jaw[2].x)/2,y:(le.y+jaw[2].y)/2}, rc={x:(re.x+jaw[14].x)/2,y:(re.y+jaw[14].y)/2};
-  const isSkin=s=>{const Y=0.299*s.r+0.587*s.g+0.114*s.b,Cb=-0.169*s.r-0.331*s.g+0.5*s.b+128,Cr=0.5*s.r-0.419*s.g-0.081*s.b+128;return Y>50&&Cb>=68&&Cb<=138&&Cr>=126&&Cr<=180;};
-  const lS=isSkin(sampleRGB(data,W,lc.x-sz/2,lc.y-sz/2,sz,sz));
-  const rS=isSkin(sampleRGB(data,W,rc.x-sz/2,rc.y-sz/2,sz,sz));
-  return { pass:lS||rS, detail:`Left cheek: ${lS?'✓ skin tone':'✗ unexpected colour'} · Right: ${rS?'✓ skin tone':'✗ unexpected colour'}` };
+  const le=avg(lm.getLeftEye()),re=avg(lm.getRightEye()),jaw=lm.getJawOutline();
+  const sz=Math.floor(Math.min(W,H)*.04);
+  const lc={x:(le.x+jaw[2].x)/2,y:(le.y+jaw[2].y)/2},rc={x:(re.x+jaw[14].x)/2,y:(re.y+jaw[14].y)/2};
+  const ok=s=>{const Y=0.299*s.r+0.587*s.g+0.114*s.b,Cb=-0.169*s.r-0.331*s.g+0.5*s.b+128,Cr=0.5*s.r-0.419*s.g-0.081*s.b+128;return Y>50&&Cb>=65&&Cb<=140&&Cr>=123&&Cr<=182;};
+  const lS=ok(sampRGB(data,W,lc.x-sz/2,lc.y-sz/2,sz,sz)),rS=ok(sampRGB(data,W,rc.x-sz/2,rc.y-sz/2,sz,sz));
+  return {pass:lS||rS, detail:`Left cheek: ${lS?'✓ skin tone':'✗ unexpected colour'} · Right: ${rS?'✓ skin tone':'✗ unexpected colour'}`};
 }
-
 function checkRedEye(data, lm, W, H) {
-  const { data: px } = data;
-  const score = eye => {
-    const ap=avgPt(eye), r=Math.max(d(eye[0],eye[3])*0.28,5); let red=0,tot=0;
-    const ir=Math.ceil(r);
-    for(let dy=-ir;dy<=ir;dy++) for(let dx=-ir;dx<=ir;dx++) {
-      if(dx*dx+dy*dy>ir*ir)continue;
-      const nx=Math.round(ap.x+dx),ny=Math.round(ap.y+dy);
-      if(nx<0||nx>=W||ny<0||ny>=H)continue;
-      const i=(ny*W+nx)*4;
-      if(px[i]>150&&px[i]>2*px[i+1]&&px[i]>2*px[i+2])red++;
-      tot++;
-    }
-    return tot>0?red/tot:0;
-  };
-  const lS=score(lm.getLeftEye()),rS=score(lm.getRightEye());
-  return { pass:Math.max(lS,rS)<0.20, detail:`Red-eye: L=${(lS*100).toFixed(0)}% R=${(rS*100).toFixed(0)}% (max 20%)` };
+  const {data:px}=data;
+  const sc=eye=>{const ap=avg(eye),r=Math.max(d(eye[0],eye[3])*.28,5);let red=0,tot=0;const ir=Math.ceil(r);
+    for(let dy=-ir;dy<=ir;dy++) for(let dx=-ir;dx<=ir;dx++){if(dx*dx+dy*dy>ir*ir)continue;
+      const nx=Math.round(ap.x+dx),ny=Math.round(ap.y+dy);if(nx<0||nx>=W||ny<0||ny>=H)continue;
+      const i=(ny*W+nx)*4;if(px[i]>150&&px[i]>2*px[i+1]&&px[i]>2*px[i+2])red++;tot++;}
+    return tot>0?red/tot:0;};
+  const lS=sc(lm.getLeftEye()),rS=sc(lm.getRightEye());
+  return {pass:Math.max(lS,rS)<.20, detail:`Red-eye: L=${(lS*100).toFixed(0)}% R=${(rS*100).toFixed(0)}% (max 20%)`};
 }
 
-// ═══════════════════════════════════════════════
-// OVERLAY DRAWING (on cropped canvas dimensions)
-// ═══════════════════════════════════════════════
+// ═══════════════════════════════════════════
+// OVERLAY
+// ═══════════════════════════════════════════
 function drawOverlay(det, W, H) {
-  overlayC.width = W; overlayC.height = H;
-  const ctx = overlayC.getContext('2d');
-  ctx.clearRect(0, 0, W, H);
+  overlayC.width=W; overlayC.height=H;
+  const ctx=overlayC.getContext('2d'); ctx.clearRect(0,0,W,H);
   if (!det) return;
+  const lm=det.landmarks, box=det.detection.box, jaw=lm.getJawOutline(), chin=jaw[8];
+  const le=avg(lm.getLeftEye()), re=avg(lm.getRightEye());
+  const eyeMidY=(le.y+re.y)/2, eyeMidX=(le.x+re.x)/2;
+  const crownY=box.top-box.height*.15;
+  const allPass=CHECKS.every(c=>state.checkResults[c.id]?.pass!==false);
+  const fs=Math.max(11,H*.013);
 
-  const lm = det.landmarks, box = det.detection.box;
-  const jaw = lm.getJawOutline();
-  const chin = jaw[8];
-  const le = avgPt(lm.getLeftEye()), re = avgPt(lm.getRightEye());
-  const eyeMidY = (le.y + re.y) / 2, eyeMidX = (le.x + re.x) / 2;
-  const crownY = box.top - box.height * 0.15;
+  ctx.strokeStyle=allPass?'#22c55e':'#f59e0b'; ctx.lineWidth=3;
+  ctx.strokeRect(box.x,box.y,box.width,box.height);
 
-  const allPass = CHECKS.every(c => state.checkResults[c.id]?.pass !== false);
-  const boxColor = allPass ? '#22c55e' : '#f59e0b';
-  const fs = Math.max(11, H * 0.013);
-
-  // Face bounding box
-  ctx.strokeStyle = boxColor; ctx.lineWidth = 3;
-  ctx.strokeRect(box.x, box.y, box.width, box.height);
-
-  // Eye crosses
-  [le, re].forEach(e => {
-    ctx.strokeStyle = '#60a5fa'; ctx.lineWidth = 2;
-    ctx.beginPath(); ctx.moveTo(e.x-10,e.y); ctx.lineTo(e.x+10,e.y);
-    ctx.moveTo(e.x,e.y-10); ctx.lineTo(e.x,e.y+10); ctx.stroke();
+  [le,re].forEach(e=>{
+    ctx.strokeStyle='#60a5fa'; ctx.lineWidth=2;
+    ctx.beginPath(); ctx.moveTo(e.x-10,e.y); ctx.lineTo(e.x+10,e.y); ctx.moveTo(e.x,e.y-10); ctx.lineTo(e.x,e.y+10); ctx.stroke();
   });
 
-  // Eye level line (horizontal)
-  ctx.setLineDash([8,5]); ctx.strokeStyle = '#60a5fa'; ctx.lineWidth = 1.5;
-  ctx.beginPath(); ctx.moveTo(0,eyeMidY); ctx.lineTo(W,eyeMidY); ctx.stroke();
-
-  // Crown line
-  ctx.strokeStyle = '#a78bfa';
-  ctx.beginPath(); ctx.moveTo(0,crownY); ctx.lineTo(W,crownY); ctx.stroke();
-
-  // Chin line
-  ctx.strokeStyle = '#fb923c';
-  ctx.beginPath(); ctx.moveTo(0,chin.y); ctx.lineTo(W,chin.y); ctx.stroke();
-
-  // Vertical centre
-  ctx.strokeStyle = 'rgba(255,255,255,0.3)'; ctx.lineWidth = 1;
+  ctx.setLineDash([8,5]);
+  [[eyeMidY,'#60a5fa'],[crownY,'#a78bfa'],[chin.y,'#fb923c']].forEach(([yy,col])=>{
+    ctx.strokeStyle=col; ctx.lineWidth=1.5;
+    ctx.beginPath(); ctx.moveTo(0,yy); ctx.lineTo(W,yy); ctx.stroke();
+  });
+  ctx.strokeStyle='rgba(255,255,255,.3)'; ctx.lineWidth=1;
   ctx.beginPath(); ctx.moveTo(W/2,0); ctx.lineTo(W/2,H); ctx.stroke();
   ctx.setLineDash([]);
 
-  // Labels
-  ctx.font = `bold ${fs}px sans-serif`;
-  const eyeMM  = ((H - eyeMidY) / H * 45).toFixed(1);
-  const headMM = ((chin.y - crownY) / H * 45).toFixed(1);
-
-  lbl(ctx, `👁 ${eyeMM} mm from bottom`, W - 8, eyeMidY - 9, '#60a5fa', 'right', fs);
-  lbl(ctx, `↕ Head: ${headMM} mm`,       box.x + box.width + 6, (crownY + chin.y)/2, '#a78bfa', 'left', fs);
+  const eyeMM=((H-eyeMidY)/H*45).toFixed(1), headMM=((chin.y-crownY)/H*45).toFixed(1);
+  lbl(ctx,`👁 ${eyeMM} mm from bottom`,W-8,eyeMidY-9,'#60a5fa','right',fs);
+  lbl(ctx,`↕ Head: ${headMM} mm`,box.x+box.width+6,(crownY+chin.y)/2,'#a78bfa','left',fs);
 }
+function lbl(ctx,t,x,y,c,a,fs){ctx.textAlign=a;ctx.font=`bold ${fs}px sans-serif`;ctx.fillStyle='rgba(0,0,0,.5)';ctx.fillText(t,x+1,y+1);ctx.fillStyle=c;ctx.fillText(t,x,y);ctx.textAlign='left';}
 
-function lbl(ctx, text, x, y, color, align, fs) {
-  ctx.textAlign = align || 'left'; ctx.font = `bold ${fs}px sans-serif`;
-  ctx.fillStyle = 'rgba(0,0,0,.5)'; ctx.fillText(text, x+1, y+1);
-  ctx.fillStyle = color; ctx.fillText(text, x, y);
-  ctx.textAlign = 'left';
-}
-
-// ═══════════════════════════════════════════════
-// UI
-// ═══════════════════════════════════════════════
+// ═══════════════════════════════════════════
+// UI RENDERING
+// ═══════════════════════════════════════════
 function renderChecklist(results) {
-  const ul = $('checklist'); ul.innerHTML = '';
-  let lastCat = null;
+  const ul=$('checklist'); ul.innerHTML='';
+  let lastCat=null;
   CHECKS.forEach(c => {
-    if (c.cat !== lastCat) {
-      lastCat = c.cat;
-      const li = document.createElement('li'); li.className = 'ck-cat'; li.textContent = c.cat;
-      ul.appendChild(li);
-    }
-    const r   = results[c.id];
-    const st  = r===undefined ? 'pending' : (r.pass ? 'pass' : 'fail');
-    const ico = st==='pass' ? '✓' : st==='fail' ? '✗' : '·';
-    const li  = document.createElement('li'); li.className='ck-item'; li.title=c.hint;
-    li.innerHTML = `<div class="ck-icon ${st}">${ico}</div><div><div class="ck-name">${c.name}</div><div class="ck-detail">${r ? r.detail : c.hint}</div></div>`;
+    if (c.cat!==lastCat) { lastCat=c.cat; const li=document.createElement('li'); li.className='ck-cat'; li.textContent=c.cat; ul.appendChild(li); }
+    const r=results[c.id];
+    const isExempt = r?.exempt === true;
+    const st = r===undefined ? 'pending' : isExempt ? 'exempt' : r.pass ? 'pass' : 'fail';
+    const ico = {pass:'✓', fail:'✗', exempt:'≈', pending:'·'}[st];
+    const li=document.createElement('li'); li.className='ck-item'; li.title=c.hint;
+    li.innerHTML=`<div class="ck-icon ${st}">${ico}</div><div>
+      <div class="ck-name">${c.name}${isExempt?'<span class="ck-exempt-tag">Exempt</span>':''}</div>
+      <div class="ck-detail">${r ? r.detail : c.hint}</div></div>`;
     ul.appendChild(li);
   });
 }
 
 function updateSummary() {
-  const tot    = CHECKS.length;
-  const passed = CHECKS.filter(c => state.checkResults[c.id]?.pass === true).length;
-  const pct    = Math.round(passed / tot * 100);
-  $('pass-counter').textContent = `${passed}/${tot} passed`;
-  $('summary-txt').textContent  = `${passed} of ${tot} checks passed (${pct}%)`;
-  const fill = $('prog-fill');
-  fill.style.width      = pct + '%';
-  fill.style.background = passed===tot ? 'var(--pass)' : pct>=60 ? 'var(--warn)' : 'var(--fail)';
+  const total   = CHECKS.length;
+  const passed  = CHECKS.filter(c => state.checkResults[c.id]?.pass === true).length;
+  const exempts = CHECKS.filter(c => state.checkResults[c.id]?.exempt === true).length;
+  const failed  = CHECKS.filter(c => state.checkResults[c.id]?.pass === false).length;
+  const pct     = Math.round(passed/total*100);
+  $('pass-counter').textContent = exempts>0 ? `${passed}/${total} (${exempts} exempt)` : `${passed}/${total} passed`;
+  $('summary-txt').textContent  = `${passed} of ${total} checks passed` + (exempts?` · ${exempts} exempt for age group`:'');
+  const fill=$('prog-fill');
+  fill.style.width      = pct+'%';
+  fill.style.background = failed===0 ? 'var(--pass)' : pct>=60 ? 'var(--warn)' : 'var(--fail)';
 }
 
 function showResult() {
   resultSec.classList.add('visible');
-  const failed = CHECKS.filter(c => state.checkResults[c.id]?.pass === false);
-
-  if (failed.length === 0) {
-    $('result-pass').style.display = '';
-    $('result-fail').style.display = 'none';
+  const failed=CHECKS.filter(c=>state.checkResults[c.id]?.pass===false);
+  if (failed.length===0) {
+    $('result-pass').style.display=''; $('result-fail').style.display='none';
   } else {
-    $('result-pass').style.display = 'none';
-    $('result-fail').style.display = '';
-    $('fail-count').textContent = failed.length;
-
-    const ul = $('rec-list'); ul.innerHTML = '';
-    failed.forEach(c => {
-      const rec = RECS[c.id];
-      if (!rec) return;
-      const li = document.createElement('li'); li.className = 'rec-item';
-      li.innerHTML = `<span class="ri">${rec.icon}</span><span>${rec.txt}</span>`;
+    $('result-pass').style.display='none'; $('result-fail').style.display='';
+    $('fail-count').textContent=failed.length;
+    const ul=$('rec-list'); ul.innerHTML='';
+    failed.forEach(c=>{
+      const rec=RECS[c.id]; if(!rec)return;
+      const li=document.createElement('li'); li.className='rec-item';
+      li.innerHTML=`<span class="ri">${rec.icon}</span><span>${rec.txt}</span>`;
       ul.appendChild(li);
     });
   }
 }
 
 // Download
-['download-btn','download-anyway-btn'].forEach(id => {
-  $(id)?.addEventListener('click', () => {
-    if (!state.croppedCanvas) return;
-    const a = document.createElement('a');
-    a.download = 'german-passport-photo.png';
-    a.href = state.croppedCanvas.toDataURL('image/png');
-    a.click();
-    showToast('✅ Downloaded as PNG — 827×1063 px (600 dpi equivalent)');
+['download-btn','download-anyway-btn'].forEach(id=>{
+  $(id)?.addEventListener('click',()=>{
+    if(!state.croppedCanvas)return;
+    const a=document.createElement('a'); a.download='german-passport-photo.png';
+    a.href=state.croppedCanvas.toDataURL('image/png'); a.click();
+    showToast('✅ Downloaded PNG — 827×1063 px (600 dpi equivalent)');
   });
 });
 
-// Toast
 let tTimer;
-function showToast(msg, ms=3200) {
-  const t=$('toast'); t.textContent=msg; t.classList.add('visible');
-  clearTimeout(tTimer); tTimer=setTimeout(()=>t.classList.remove('visible'),ms);
-}
+function showToast(msg,ms=3200){const t=$('toast');t.textContent=msg;t.classList.add('visible');clearTimeout(tTimer);tTimer=setTimeout(()=>t.classList.remove('visible'),ms);}
 
-// Init checklist
 renderChecklist({});
 </script>
 </body>
